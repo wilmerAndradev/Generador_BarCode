@@ -1,0 +1,73 @@
+:root {
+    --color-principal: #B18340;
+    --color-secundario: #ffffff;
+    --color-terciario: #073763; /* ← color nuevo para etiquetas del formulario */
+    --fuente-principal: 'Montserrat', sans-serif;
+    --fuente-encabezado: 'Playfair Display', serif;
+    --radio-borde: 15px;
+    --sombra-suave: 0 4px 15px rgba(0, 0, 0, 0.1);
+  }
+  
+  body {
+    background-color: var(--color-secundario);
+    font-family: var(--fuente-principal);
+  }
+  
+  h1, h2, h3 {
+    font-family: var(--fuente-encabezado);
+    color: var(--color-principal);
+  }
+  
+  .navbar {
+    background-color: var(--color-principal);
+    padding: 10px 0;
+  }
+  
+  .navbar .navbar-brand img {
+    height: 80px;
+    width: auto;
+  }
+  
+  .form-container {
+    max-width: 600px;
+    margin: 50px auto;
+    padding: 50px 40px;
+    background-color: var(--color-secundario);
+    border-radius: var(--radio-borde);
+    box-shadow: var(--sombra-suave);
+  }
+  
+  .form-label {
+    color: var(--color-terciario);
+    font-weight: 500;
+  }
+  
+  .form-control {
+    border-radius: 10px;
+    padding: 12px;
+  }
+  
+  .btn-primary {
+    background-color: var(--color-principal);
+    border-color: var(--color-principal);
+    border-radius: 10px;
+    padding: 12px;
+    font-weight: 500;
+  }
+  
+  .btn-primary:hover {
+    background-color: #946e36;
+    border-color: #946e36;
+  }
+  
+  .form-text {
+    color: #6c757d;
+  }
+  
+  .alert {
+    margin-bottom: 25px;
+  }
+  
+  h2 {
+    color: var(--color-principal);
+  }
