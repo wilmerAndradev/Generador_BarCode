@@ -48,7 +48,7 @@ def generar_pdf(codigo, cantidad, output_path):
 
     # Dimensiones de cada etiqueta en puntos (3.5 cm ≈ 103 pts, 1.5 cm ≈ 45 pts)
     label_width = 103
-    label_height = 45
+    label_height = 75
 
     # Márgenes externos para centrar la cuadrícula en la página.
     outer_margin_x = 20
@@ -162,3 +162,4 @@ def index():
 # 4. Bloque de prueba y ejecución
 if __name__ == '__main__':
     app.run(debug=True)
+
