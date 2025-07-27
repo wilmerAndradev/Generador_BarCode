@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Ingresar Productos - Silk Perfumes</title>
+
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
+
+  <!-- Bootstrap 5 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <!-- Estilos personalizados -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+
+<body>
+  <!-- NAVBAR CON LOGO CENTRADO -->
+  <nav class="navbar">
+    <div class="container d-flex justify-content-center">
+      <a class="navbar-brand" href="#">
+        <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo">
+      </a>
+    </div>
+  </nav>
+
+  <!-- FORMULARIO DE PRODUCTOS -->
+  <div class="form-container form-container-wide">
+    <!-- INDICADOR DE PASOS -->
+    <div class="step-indicator">
+      <span class="step completed">1</span>
+      <span class="step active">2</span>
+      <span class="step">3</span>
+    </div>
+
+    <h2 class="text-center mb-4"><strong>Paso 2: Información de productos</strong></h2>
+    
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        <div class="alert alert-danger" role="alert">
+          {% for message in messages %}
+            <p class="mb-0">{{ message }}</p>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    <form method="POST">
+      {% for i in range(num_productos) %}
+      <div class="product-card">
+        <h5><i class="fas fa-box"></i> Producto {{ i + 1 }}</h5>
+        
+        <div class="row">
+          <div class="col-md-4 mb-3">
+            <label for="sku_{{ i }}" class="form-label">SKU</label>
+            <input type="text" class="form-control" id="sku_{{ i }}" name="sku_{{ i }}" 
+                   placeholder="Ej: SP001" required
+                   {% if productos_existentes and i < productos_existentes|length %}
+                   value="{{ productos_existentes[i].sku }}"
+                   {% endif %}>
+            <div class="form-text">Código único del producto</div>
+          </div>
+          
+          <div class="col-md-4 mb-3">
+            <label for="codigo_{{ i }}" class="form-label">Código de Barras</label>
+            <input type="text" class="form-control" id="codigo_{{ i }}" name="codigo_{{ i }}" 
+                   placeholder="Ej: 1234567890" required
+                   {% if productos_existentes and i < productos_existentes|length %}
+                   value="{{ productos_existentes[i].codigo }}"
+                   {% endif %}>
+            <div class="form-text">Código para el código de barras</div>
+          </div>
+          
+          <div class="col-md-4 mb-3">
+            <label for="cantidad_{{ i }}" class="form-label">Cantidad de etiquetas</label>
+            <input type="number" class="form-control" id="cantidad_{{ i }}" name="cantidad_{{ i }}" 
+                   placeholder="Ej: 20" min="1" required
+                   {% if productos_existentes and i < productos_existentes|length %}
+                   value="{{ productos_existentes[i].cantidad }}"
+                   {% endif %}>
+            <div class="form-text">Número de etiquetas a generar</div>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+
+      <div class="d-flex justify-content-between mt-4">
+        <a href="{{ url_for('index') }}" class="btn btn-secondary">← Volver</a>
+        <button type="submit" class="btn btn-primary">Generar Etiquetas →</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

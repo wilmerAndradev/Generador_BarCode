@@ -1,221 +1,457 @@
 # 1. Importaciones
-from flask import Flask, render_template, request, redirect, url_for, send_file, flash
+from flask import Flask, render_template, request, redirect, url_for, send_file, flash, session
 import barcode
 from barcode.writer import ImageWriter
 from io import BytesIO
-from reportlab.lib.pagesizes import letter   # Volvemos a usar tamaño carta estándar
-from reportlab.pdfgen import canvas          # Para generar el PDF
-from reportlab.lib.utils import ImageReader    # Para leer la imagen del código de barras desde el buffer
-from reportlab.lib.units import mm, cm        # Para trabajar con milímetros y centímetros directamente
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas
+from reportlab.lib.utils import ImageReader
+from reportlab.lib.units import mm, cm
+from reportlab.lib.colors import black
+import os
+import zipfile
+from datetime import datetime
+from typing import Dict, List, Tuple, Optional
 
-# 2. Definición de funciones
-
-def generar_barcode(codigo):
-    """
-    Genera una imagen de código de barras en formato Code128 a partir de una cadena.
-    Optimizado para maximizar el ancho del código de barras en etiquetas pequeñas.
-    """
-    BARCODE_FORMAT = barcode.get_barcode_class('code128')
+# 2. Configuración de constantes (principio DRY)
+class LabelConfig:
+    """Configuración centralizada para etiquetas"""
+    # Medidas de hoja y etiquetas
+    PAGE_WIDTH = 21.7 * cm
+    PAGE_HEIGHT = 28 * cm
+    PRINTABLE_WIDTH = 21.1 * cm
+    PRINTABLE_HEIGHT = 28 * cm
     
-    # Configuración específica para etiquetas de 35x25mm
-    options = {
-        "write_text": True,          # Mostrar el número debajo del código
-        "module_height": 8.0,        # Altura de las barras (reducida para etiquetas pequeñas)
-        "module_width": 0.3,         # Ancho de cada barra (más delgado para mejor ajuste)
-        "quiet_zone": 0.3,           # Zona silenciosa mínima (reducida)
-        "font_size": 8,              # Tamaño de la fuente más pequeño
-        "text_distance": 3.0,        # Distancia entre barras y texto (reducida)
-        "margin": 0                  # Sin margen adicional para maximizar el área útil
+    # Dimensiones de etiquetas
+    LABEL_WIDTH = 35 * mm
+    LABEL_HEIGHT = 25 * mm
+    
+    # Layout de grilla
+    LABELS_PER_ROW = int(PRINTABLE_WIDTH // LABEL_WIDTH)  # 6
+    LABELS_PER_COL = int(PRINTABLE_HEIGHT // LABEL_HEIGHT)  # 11
+    TOTAL_LABELS_PER_PAGE = LABELS_PER_ROW * LABELS_PER_COL  # 66
+    
+    # Ajustes de calibración (modificables según pruebas)
+    CALIBRATION_X = 0 * mm  # Ajuste horizontal
+    CALIBRATION_Y = 0 * mm  # Ajuste vertical
+    
+    # Configuración de código de barras
+    BARCODE_CONFIG = {
+        "write_text": True,
+        "module_height": 8.0,
+        "module_width": 0.3,
+        "quiet_zone": 0.3,
+        "font_size": 8,
+        "text_distance": 3.0,
+        "margin": 0
     }
-    
-    my_barcode = BARCODE_FORMAT(codigo, writer=ImageWriter())
-    buffer = BytesIO()
-    my_barcode.write(buffer, options=options)
-    buffer.seek(0)
-    return buffer
 
-def generar_pdf(codigo, cantidad, output_path):
+def generar_barcode(codigo: str) -> BytesIO:
     """
-    Genera un PDF en hoja tamaño CARTA con plantilla precortada de 66 etiquetas.
+    Genera código de barras optimizado para etiquetas de 35x25mm
     
-    Especificaciones de la plantilla precortada:
-    - Hoja: Tamaño carta estándar (8.5" x 11" = 215.9 x 279.4 mm)
-    - Etiquetas: 35 x 25 mm cada una
-    - Separación: 1mm entre etiquetas (ya definida en el precortado)
-    - Total: Exactamente 66 etiquetas por hoja (distribución calculada)
-    
-    La hoja viene precortada, por lo que debemos calcular la distribución exacta
-    para que las etiquetas coincidan perfectamente con los espacios precortados.
-    
-    Parámetros:
-      codigo (str): El código para generar el código de barras.
-      cantidad (int): Número total de etiquetas a generar.
-      output_path (str): Ruta y nombre del archivo PDF generado.
+    Args:
+        codigo: String del código de barras
+        
+    Returns:
+        BytesIO: Buffer con imagen del código de barras
     """
-    
-    # === CONFIGURACIÓN DE PÁGINA ESTÁNDAR ===
-    # Usar tamaño carta estándar (la hoja física es carta)
-    page_width, page_height = letter  # 612 x 792 puntos (8.5" x 11")
-    
-    # === CONFIGURACIÓN DE ETIQUETAS PRECORTADAS ===
-    # Dimensiones exactas de cada etiqueta precortada
-    label_width = 35 * mm      # 35 milímetros de ancho
-    label_height = 25 * mm     # 25 milímetros de alto
-    
-    # Separación fija entre etiquetas (ya definida en el precortado)
-    gap_x = 0.7 * mm             # 1mm de separación horizontal
-    gap_y = 0.7 * mm             # 1mm de separación vertical
-    
-    # === CONFIGURACIÓN FIJA PARA PLANTILLA PRECORTADA ===
-    # La plantilla precortada tiene EXACTAMENTE 6 columnas x 11 filas = 66 etiquetas
-    num_labels_per_row = 6     # 6 columnas fijas (según precortado)
-    num_labels_per_col = 11    # 11 filas fijas (según precortado)
-    total_labels_per_page = 66 # Total fijo de 66 etiquetas por hoja
-    
-    # Márgenes mínimos de impresora (área no imprimible)
-    printer_margin = 6 * mm    # 6mm de margen mínimo en todos los lados
-    
-    # Área disponible para imprimir
-    printable_width = page_width - (2 * printer_margin)
-    printable_height = page_height - (2 * printer_margin)
-    
-    # === CÁLCULO DE POSICIONAMIENTO CORRECTO ===
-    # Calcular el área total ocupada por la grilla de etiquetas
-    total_grid_width = num_labels_per_row * label_width + (num_labels_per_row - 1) * gap_x
-    total_grid_height = num_labels_per_col * label_height + (num_labels_per_col - 1) * gap_y
-    
-    # Centrar la grilla dentro del área imprimible (no de toda la página)
-    start_x = printer_margin + (printable_width - total_grid_width) / 2
-    start_y = printer_margin + (printable_height - total_grid_height) / 2 + total_grid_height - label_height
-    
-    print(f"Grilla: {total_grid_width/mm:.1f}mm x {total_grid_height/mm:.1f}mm")
-    print(f"Posición inicial: x={start_x/mm:.1f}mm, y={start_y/mm:.1f}mm")
-    
-    # === AJUSTE FINO DE CALIBRACIÓN ===
-    # Corrección basada en pruebas de impresión
-    calibration_offset_x = 0 * mm   # Eje X ya está correcto
-    calibration_offset_y = 0 * mm   # Eje Y
-    
-    # Aplicar los ajustes de calibración
-    start_x += calibration_offset_x
-    start_y += calibration_offset_y
-    
-    # === GENERACIÓN DEL PDF ===
-    c = canvas.Canvas(output_path, pagesize=letter)  # Usar tamaño carta estándar
-    barcode_buffer = generar_barcode(codigo)
-    barcode_image = ImageReader(barcode_buffer)
-    
-    # Obtener las dimensiones reales de la imagen del código de barras
-    img_width, img_height = barcode_image.getSize()
-    
-    # Generar etiquetas
-    for i in range(cantidad):
-        # Calcular posición en la página actual
-        pos_in_page = i % total_labels_per_page
+    try:
+        barcode_class = barcode.get_barcode_class('code128')
+        barcode_instance = barcode_class(codigo, writer=ImageWriter())
         
-    # Generar etiquetas con distribución regular (sin posiciones especiales)
-    for i in range(cantidad):
-        # Calcular posición en la página actual
-        pos_in_page = i % total_labels_per_page
+        buffer = BytesIO()
+        barcode_instance.write(buffer, options=LabelConfig.BARCODE_CONFIG)
+        buffer.seek(0)
         
-        # Distribución regular en grilla
-        row = pos_in_page // num_labels_per_row
-        col = pos_in_page % num_labels_per_row
-        
-        # Calcular coordenadas x, y de la etiqueta
-        x = start_x + col * (label_width + gap_x)
-        y = start_y - row * (label_height + gap_y)
-        
-        # === CONFIGURACIÓN DEL CÓDIGO DE BARRAS DENTRO DE LA ETIQUETA ===
-        # Márgenes internos de la etiqueta (muy pequeños para maximizar espacio)
-        margin_x = 2  # margen horizontal interno mínimo
-        margin_y = 2  # margen vertical interno mínimo
-        
-        # Espacio utilizable dentro de la etiqueta
-        usable_width = label_width - 2 * margin_x
-        usable_height = label_height - 2 * margin_y
-        
-        # Calcular el factor de escala para ajustar el código de barras
-        # Priorizar el ancho para maximizar legibilidad
-        width_ratio = usable_width / img_width
-        height_ratio = usable_height / img_height
-        
-        # Usar el factor que mejor se ajuste sin exceder los límites
-        scale_factor = min(width_ratio, height_ratio)
-        
-        new_width = img_width * scale_factor
-        new_height = img_height * scale_factor
-        
-        # Centrar la imagen del código de barras en la etiqueta
-        x_centered = x + margin_x + (usable_width - new_width) / 2
-        y_centered = y + margin_y + (usable_height - new_height) / 2
-        
-        # Dibujar el código de barras en la etiqueta
-        c.drawImage(barcode_image, x_centered, y_centered,
-                    width=new_width, height=new_height, preserveAspectRatio=True)
-        
-        # === DIBUJAR BORDES DE LA ETIQUETA ===
-        # Estos bordes son ESENCIALES para verificar alineación con el precortado
-        c.setLineWidth(0.1)
-        c.rect(x, y, label_width, label_height, stroke=1, fill=0)
-        
-        # === CONTROL DE PÁGINAS ===
-        # Si se completó una página y aún hay más etiquetas, crear nueva página
-        if (i + 1) % total_labels_per_page == 0 and (i + 1) < cantidad:
-            c.showPage()
-            # Resetear posición inicial para la nueva página
-            start_y = page_height - (page_height - total_grid_height) / 2 - label_height
-    
-    # Finalizar y guardar el PDF
-    c.save()
+        return buffer
+    except Exception as e:
+        raise ValueError(f"Error generando código de barras para '{codigo}': {str(e)}")
 
-# 3. Definición de las rutas de Flask
+def calcular_layout() -> Tuple[float, float, float, float]:
+    """
+    Calcula las posiciones de layout de forma matemáticamente precisa
+    
+    Returns:
+        Tuple: (margin_x, margin_y, start_x, start_y)
+    """
+    # Margen para centrar área de etiquetas en área imprimible
+    margin_x = (LabelConfig.PAGE_WIDTH - LabelConfig.PRINTABLE_WIDTH) / 2
+    margin_y = (LabelConfig.PAGE_HEIGHT - LabelConfig.PRINTABLE_HEIGHT) / 2
+    
+    # Calcular espacio usado y sobrante
+    used_width = LabelConfig.LABELS_PER_ROW * LabelConfig.LABEL_WIDTH
+    used_height = LabelConfig.LABELS_PER_COL * LabelConfig.LABEL_HEIGHT
+    
+    extra_margin_x = (LabelConfig.PRINTABLE_WIDTH - used_width) / 2
+    extra_margin_y = (LabelConfig.PRINTABLE_HEIGHT - used_height) / 2
+    
+    # Posición inicial con calibración
+    start_x = margin_x + extra_margin_x + LabelConfig.CALIBRATION_X
+    start_y = LabelConfig.PAGE_HEIGHT - margin_y - extra_margin_y - LabelConfig.LABEL_HEIGHT + LabelConfig.CALIBRATION_Y
+    
+    return margin_x, margin_y, start_x, start_y
+
+def calcular_posicion_etiqueta(index: int, start_x: float, start_y: float) -> Tuple[float, float, int, int]:
+    """
+    Calcula posición exacta de una etiqueta sin acumulación de errores
+    
+    Args:
+        index: Índice de la etiqueta en la página
+        start_x, start_y: Posiciones de inicio
+        
+    Returns:
+        Tuple: (x, y, fila, columna)
+    """
+    fila = index // LabelConfig.LABELS_PER_ROW
+    columna = index % LabelConfig.LABELS_PER_ROW
+    
+    # Cálculo directo desde origen (evita acumulación de errores)
+    x = start_x + columna * LabelConfig.LABEL_WIDTH
+    y = start_y - fila * LabelConfig.LABEL_HEIGHT
+    
+    return round(x, 1), round(y, 1), fila, columna
+
+def generar_pdf(codigo: str, cantidad: int, output_path: str) -> None:
+    """
+    Genera PDF con etiquetas de código de barras
+    
+    Args:
+        codigo: Código de barras a generar
+        cantidad: Número de etiquetas
+        output_path: Ruta del archivo de salida
+    """
+    if cantidad <= 0:
+        raise ValueError("La cantidad debe ser mayor a 0")
+    
+    # Configuración inicial
+    margin_x, margin_y, start_x, start_y = calcular_layout()
+    
+    # Log de configuración (útil para debugging)
+    print(f"Generando PDF: {os.path.basename(output_path)}")
+    print(f"  - Código: {codigo}")
+    print(f"  - Cantidad: {cantidad}")
+    print(f"  - Layout: {LabelConfig.LABELS_PER_ROW}x{LabelConfig.LABELS_PER_COL} = {LabelConfig.TOTAL_LABELS_PER_PAGE}/página")
+    print(f"  - Posición inicial: ({start_x/mm:.1f}, {start_y/mm:.1f}) mm")
+    
+    try:
+        # Crear PDF
+        c = canvas.Canvas(output_path, pagesize=(LabelConfig.PAGE_WIDTH, LabelConfig.PAGE_HEIGHT))
+        
+        # Generar código de barras una sola vez (eficiencia)
+        barcode_buffer = generar_barcode(codigo)
+        barcode_image = ImageReader(barcode_buffer)
+        img_width, img_height = barcode_image.getSize()
+        
+        # Generar etiquetas
+        for i in range(cantidad):
+            pos_in_page = i % LabelConfig.TOTAL_LABELS_PER_PAGE
+            
+            # Nueva página si es necesario
+            if pos_in_page == 0 and i > 0:
+                c.showPage()
+            
+            # Calcular posición exacta
+            x, y, fila, columna = calcular_posicion_etiqueta(pos_in_page, start_x, start_y)
+            
+            # Colocar código de barras centrado en etiqueta
+            colocar_codigo_barras(c, barcode_image, img_width, img_height, x, y)
+            
+            # Dibujar borde de etiqueta (para verificación)
+            dibujar_borde_etiqueta(c, x, y)
+        
+        # Guardar PDF
+        c.save()
+        print(f"  ✓ PDF generado exitosamente")
+        
+    except Exception as e:
+        raise RuntimeError(f"Error generando PDF: {str(e)}")
+
+def colocar_codigo_barras(c: canvas.Canvas, barcode_image: ImageReader, 
+                         img_width: int, img_height: int, x: float, y: float) -> None:
+    """
+    Coloca el código de barras centrado en la etiqueta
+    
+    Args:
+        c: Canvas de ReportLab
+        barcode_image: Imagen del código de barras
+        img_width, img_height: Dimensiones de la imagen
+        x, y: Posición de la etiqueta
+    """
+    # Margen interno para que no toque los bordes
+    padding = 1 * mm
+    available_width = LabelConfig.LABEL_WIDTH - 2 * padding
+    available_height = LabelConfig.LABEL_HEIGHT - 2 * padding
+    
+    # Calcular escala manteniendo proporción
+    scale_x = available_width / img_width
+    scale_y = available_height / img_height
+    scale = min(scale_x, scale_y)
+    
+    # Dimensiones finales
+    final_width = img_width * scale
+    final_height = img_height * scale
+    
+    # Centrar en la etiqueta
+    barcode_x = x + padding + (available_width - final_width) / 2
+    barcode_y = y + padding + (available_height - final_height) / 2
+    
+    # Dibujar código de barras
+    c.drawImage(barcode_image, barcode_x, barcode_y,
+               width=final_width, height=final_height, 
+               preserveAspectRatio=True)
+
+def dibujar_borde_etiqueta(c: canvas.Canvas, x: float, y: float) -> None:
+    """
+    Dibuja borde de la etiqueta para verificación visual
+    
+    Args:
+        c: Canvas de ReportLab
+        x, y: Posición de la etiqueta
+    """
+    c.setStrokeColor(black)
+    c.setLineWidth(0.5)
+    c.rect(x, y, LabelConfig.LABEL_WIDTH, LabelConfig.LABEL_HEIGHT, stroke=1, fill=0)
+
+def crear_zip_pdfs(lista_pdfs: List[Dict], zip_filename: str) -> None:
+    """
+    Crea archivo ZIP con todos los PDFs generados
+    
+    Args:
+        lista_pdfs: Lista de diccionarios con información de PDFs
+        zip_filename: Nombre del archivo ZIP
+    """
+    try:
+        with zipfile.ZipFile(zip_filename, 'w', zipfile.ZIP_DEFLATED) as zipf:
+            for pdf_info in lista_pdfs:
+                if pdf_info.get('generado') and os.path.exists(pdf_info['archivo']):
+                    zipf.write(pdf_info['archivo'], os.path.basename(pdf_info['archivo']))
+        print(f"ZIP creado: {zip_filename}")
+    except Exception as e:
+        raise RuntimeError(f"Error creando ZIP: {str(e)}")
+
+def validar_producto(sku: str, codigo: str, cantidad: str, numero: int) -> Dict:
+    """
+    Valida datos de un producto
+    
+    Args:
+        sku, codigo, cantidad: Datos del producto
+        numero: Número del producto para mensajes de error
+        
+    Returns:
+        Dict: Producto validado o error
+    """
+    # Limpiar datos
+    sku = sku.strip()
+    codigo = codigo.strip()
+    
+    # Validaciones
+    if not sku:
+        return {'error': f"El SKU del producto {numero} es obligatorio."}
+    
+    if not codigo:
+        return {'error': f"El código de barras del producto {numero} es obligatorio."}
+    
+    try:
+        cantidad_int = int(cantidad)
+        if cantidad_int < 1:
+            return {'error': f"La cantidad del producto {numero} debe ser 1 o superior."}
+    except (ValueError, TypeError):
+        return {'error': f"La cantidad del producto {numero} debe ser un número válido."}
+    
+    return {
+        'sku': sku,
+        'codigo': codigo,
+        'cantidad': cantidad_int
+    }
+
+# 3. Aplicación Flask
 app = Flask(__name__)
-# Define la clave secreta para poder usar flash
-app.secret_key = "tu_clave_secreta_aqui"
+app.secret_key = os.environ.get('SECRET_KEY', 'clave_por_defecto_cambiar_en_produccion')
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
-    """
-    Ruta principal que maneja tanto la visualización del formulario (GET)
-    como el procesamiento de la generación de etiquetas (POST).
-    
-    Formulario requiere:
-    - codigo: Texto para el código de barras
-    - cantidad: Número de etiquetas a generar (mínimo 1)
-    """
+    """Paso 1: Definir cantidad de productos"""
     if request.method == 'POST':
-        # Capturamos el código y la cantidad enviados en el formulario
-        codigo = request.form.get('codigo')
         try:
-            cantidad = int(request.form.get('cantidad', 0))
-        except ValueError:
-            cantidad = 0
-
-        # === VALIDACIONES DEL SERVIDOR ===
-        if not codigo:
-            flash("El campo código de barra es obligatorio.")
-            return redirect(url_for('index'))
-        if cantidad < 1:
-            flash("La cantidad debe ser 1 o superior.")
+            num_productos = int(request.form.get('num_productos', 0))
+        except (ValueError, TypeError):
+            flash("Debe ingresar un número válido.")
             return redirect(url_for('index'))
 
-        # Definimos el nombre del archivo PDF de salida
-        output_file = f"etiqueta_{codigo}.pdf"
+        if not 1 <= num_productos <= 50:
+            flash("El número de productos debe estar entre 1 y 50.")
+            return redirect(url_for('index'))
 
-        # Llamamos a la función para generar el PDF con las etiquetas
-        generar_pdf(codigo, cantidad, output_file)
+        session.clear()  # Limpiar sesión anterior
+        session['num_productos'] = num_productos
+        return redirect(url_for('ingresar_productos'))
 
-        # Se envía el PDF para descarga, como un archivo adjunto
-        return send_file(output_file, as_attachment=True)
-
-    # Si es método GET, mostrar el formulario
     return render_template('index.html')
 
-# 4. Bloque de prueba y ejecución
+@app.route('/ingresar-productos', methods=['GET', 'POST'])
+def ingresar_productos():
+    """Paso 2: Ingresar datos de productos"""
+    if 'num_productos' not in session:
+        return redirect(url_for('index'))
+
+    num_productos = session['num_productos']
+
+    if request.method == 'POST':
+        productos = []
+        errores = []
+        
+        # Validar cada producto
+        for i in range(num_productos):
+            sku = request.form.get(f'sku_{i}', '')
+            codigo = request.form.get(f'codigo_{i}', '')
+            cantidad = request.form.get(f'cantidad_{i}', '')
+            
+            resultado = validar_producto(sku, codigo, cantidad, i + 1)
+            
+            if 'error' in resultado:
+                errores.append(resultado['error'])
+            else:
+                productos.append(resultado)
+        
+        # Verificar SKUs únicos
+        if not errores:
+            skus = [p['sku'] for p in productos]
+            if len(skus) != len(set(skus)):
+                errores.append("Los SKUs deben ser únicos.")
+        
+        # Si hay errores, mostrarlos
+        if errores:
+            for error in errores:
+                flash(error)
+            return render_template('ingresar_productos.html', 
+                                 num_productos=num_productos)
+        
+        # Guardar productos y continuar
+        session['productos'] = productos
+        return redirect(url_for('generar_etiquetas'))
+
+    return render_template('ingresar_productos.html', num_productos=num_productos)
+
+@app.route('/generar-etiquetas')
+def generar_etiquetas():
+    """Paso 3: Generar PDFs"""
+    if 'productos' not in session:
+        return redirect(url_for('index'))
+
+    productos = session['productos']
+    
+    # Crear directorio si no existe
+    os.makedirs('pdfs_generados', exist_ok=True)
+    
+    pdfs_generados = []
+    
+    for producto in productos:
+        # Nombre de archivo limpio y descriptivo
+        nombre_archivo = f"{producto['sku']}_{producto['codigo']}_etiquetas.pdf"
+        ruta_archivo = os.path.join('pdfs_generados', nombre_archivo)
+        
+        try:
+            generar_pdf(producto['codigo'], producto['cantidad'], ruta_archivo)
+            
+            pdfs_generados.append({
+                'sku': producto['sku'],
+                'codigo': producto['codigo'],
+                'cantidad': producto['cantidad'],
+                'nombre_archivo': nombre_archivo,
+                'archivo': ruta_archivo,
+                'generado': True
+            })
+            
+        except Exception as e:
+            print(f"Error generando PDF para {producto['sku']}: {str(e)}")
+            pdfs_generados.append({
+                'sku': producto['sku'],
+                'codigo': producto['codigo'],
+                'cantidad': producto['cantidad'],
+                'nombre_archivo': nombre_archivo,
+                'archivo': '',
+                'generado': False,
+                'error': str(e)
+            })
+
+    session['pdfs_generados'] = pdfs_generados
+    return render_template('panel_descarga.html', pdfs=pdfs_generados)
+
+@app.route('/descargar/<filename>')
+def descargar_pdf(filename: str):
+    """Descargar PDF individual"""
+    # Validación de seguridad básica
+    if '..' in filename or '/' in filename:
+        flash("Nombre de archivo inválido.")
+        return redirect(url_for('index'))
+    
+    ruta_archivo = os.path.join('pdfs_generados', filename)
+    
+    if os.path.exists(ruta_archivo):
+        return send_file(ruta_archivo, as_attachment=True)
+    else:
+        flash("El archivo no existe.")
+        return redirect(url_for('generar_etiquetas'))
+
+@app.route('/descargar-todos')
+def descargar_todos():
+    """Descargar todos los PDFs en ZIP"""
+    if 'pdfs_generados' not in session:
+        return redirect(url_for('index'))
+
+    pdfs_exitosos = [pdf for pdf in session['pdfs_generados'] if pdf.get('generado')]
+    
+    if not pdfs_exitosos:
+        flash("No hay archivos para descargar.")
+        return redirect(url_for('generar_etiquetas'))
+
+    # Crear ZIP con timestamp
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    zip_filename = f"etiquetas_silk_perfumes_{timestamp}.zip"
+    zip_path = os.path.join('pdfs_generados', zip_filename)
+
+    try:
+        crear_zip_pdfs(pdfs_exitosos, zip_path)
+        return send_file(zip_path, as_attachment=True)
+    except Exception as e:
+        flash(f"Error creando ZIP: {str(e)}")
+        return redirect(url_for('generar_etiquetas'))
+
+@app.route('/reiniciar')
+def reiniciar():
+    """Reiniciar sesión"""
+    session.clear()
+    return redirect(url_for('index'))
+
+@app.route('/limpiar-archivos')
+def limpiar_archivos():
+    """Limpiar archivos generados (desarrollo)"""
+    try:
+        if os.path.exists('pdfs_generados'):
+            archivos_eliminados = 0
+            for archivo in os.listdir('pdfs_generados'):
+                os.remove(os.path.join('pdfs_generados', archivo))
+                archivos_eliminados += 1
+            flash(f"Se eliminaron {archivos_eliminados} archivos.")
+        else:
+            flash("No hay archivos para eliminar.")
+    except Exception as e:
+        flash(f"Error limpiando archivos: {str(e)}")
+    
+    return redirect(url_for('index'))
+
+# 4. Manejo de errores
+@app.errorhandler(404)
+def not_found(error):
+    return redirect(url_for('index'))
+
+@app.errorhandler(500)
+def internal_error(error):
+    flash("Ocurrió un error interno. Por favor, intenta nuevamente.")
+    return redirect(url_for('index'))
+
+# 5. Punto de entrada
 if __name__ == '__main__':
-    """
-    Ejecutar la aplicación Flask en modo debug para desarrollo.
-    En producción, usar un servidor WSGI como Gunicorn.
-    """
-    app.run(debug=True)
+    # Configuración para desarrollo
+    app.run(debug=True, host='127.0.0.1', port=5000)

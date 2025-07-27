@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Generador de Etiquetas</title>
+  <title>Generador de Etiquetas - Silk Perfumes</title>
 
   <!-- Google Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
@@ -16,7 +16,6 @@
 </head>
 
 <body>
-
   <!-- NAVBAR CON LOGO CENTRADO -->
   <nav class="navbar">
     <div class="container d-flex justify-content-center">
@@ -28,7 +27,15 @@
 
   <!-- FORMULARIO CENTRAL -->
   <div class="form-container">
-    <h2 class="text-center mb-4"><strong>Generador de Códigos de Barra</strong></h2>
+    <!-- INDICADOR DE PASOS -->
+    <div class="step-indicator">
+      <span class="step active">1</span>
+      <span class="step">2</span>
+      <span class="step">3</span>
+    </div>
+
+    <h2 class="text-center mb-4"><strong>Paso 1: ¿Cuántos productos necesitas?</strong></h2>
+    
     {% with messages = get_flashed_messages() %}
       {% if messages %}
         <div class="alert alert-danger" role="alert">
@@ -41,18 +48,18 @@
 
     <form method="POST">
       <div class="mb-4">
-        <label for="codigo" class="form-label">Introduzca el codigo de barras</label>
-        <input type="text" class="form-control" id="codigo" name="codigo" placeholder="Ej: 001" required>
-        <div class="form-text">Ejemplo: 001, 002, etc.</div>
+        <label for="num_productos" class="form-label">Número de productos diferentes</label>
+        <input type="number" class="form-control" id="num_productos" name="num_productos" 
+               placeholder="Ej: 3" min="1" max="50" required>
+        <div class="form-text">Cada producto tendrá su propio código de barras y SKU</div>
       </div>
 
-      <div class="mb-4">
-        <label for="cantidad" class="form-label">Introduzca la cantidad de etiquetas</label>
-        <input type="number" class="form-control" id="cantidad" name="cantidad" placeholder="Ej: 20" min="1" required>
-      </div>
-
-      <button type="submit" class="btn btn-primary w-100">Enviar</button>
+      <button type="submit" class="btn btn-primary w-100">Continuar</button>
     </form>
+
+    <div class="text-center mt-4">
+      <a href="{{ url_for('limpiar_archivos') }}" class="btn btn-outline-secondary btn-sm">Limpiar archivos anteriores</a>
+    </div>
   </div>
 
   <!-- Bootstrap JS -->

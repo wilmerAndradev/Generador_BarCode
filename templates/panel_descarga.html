@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Descargar Etiquetas - Silk Perfumes</title>
+
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
+
+  <!-- Bootstrap 5 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <!-- Font Awesome -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+
+  <!-- Estilos personalizados -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+
+<body>
+  <!-- NAVBAR CON LOGO CENTRADO -->
+  <nav class="navbar">
+    <div class="container d-flex justify-content-center">
+      <a class="navbar-brand" href="#">
+        <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo">
+      </a>
+    </div>
+  </nav>
+
+  <!-- PANEL DE DESCARGA -->
+  <div class="form-container form-container-wide">
+    <!-- INDICADOR DE PASOS -->
+    <div class="step-indicator">
+      <span class="step completed">1</span>
+      <span class="step completed">2</span>
+      <span class="step active">3</span>
+    </div>
+
+    <h2 class="text-center mb-4"><strong>Paso 3: Etiquetas generadas</strong></h2>
+    
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        <div class="alert alert-danger" role="alert">
+          {% for message in messages %}
+            <p class="mb-0">{{ message }}</p>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    <!-- BOTÓN DESCARGAR TODOS -->
+    {% set pdfs_exitosos = pdfs | selectattr('generado', 'equalto', true) | list %}
+    {% if pdfs_exitosos | length > 1 %}
+    <div class="text-center mb-4">
+      <a href="{{ url_for('descargar_todos') }}" class="btn btn-success btn-lg">
+        <i class="fas fa-download"></i> Descargar Todos los PDFs (ZIP)
+      </a>
+    </div>
+    <hr class="my-4">
+    {% endif %}
+
+    <!-- LISTA DE ARCHIVOS GENERADOS -->
+    <div class="row">
+      {% for pdf in pdfs %}
+      <div class="col-md-6 mb-3">
+        <div class="pdf-card {% if not pdf.generado %}pdf-card-error{% endif %}">
+          <div class="pdf-card-header">
+            <h5>
+              {% if pdf.generado %}
+                <i class="fas fa-file-pdf text-success"></i>
+              {% else %}
+                <i class="fas fa-exclamation-triangle text-danger"></i>
+              {% endif %}
+              {{ pdf.sku }}
+            </h5>
+          </div>
+          
+          <div class="pdf-card-body">
+            <p class="mb-2"><strong>Código:</strong> {{ pdf.codigo }}</p>
+            <p class="mb-2"><strong>Cantidad:</strong> {{ pdf.cantidad }} etiquetas</p>
+            
+            {% if pdf.generado %}
+              <p class="mb-3 text-muted small">{{ pdf.nombre_archivo }}</p>
+              <a href="{{ url_for('descargar_pdf', filename=pdf.nombre_archivo) }}" 
+                 class="btn btn-primary btn-sm w-100">
+                <i class="fas fa-download"></i> Descargar PDF
+              </a>
+            {% else %}
+              <div class="alert alert-danger small mb-2">
+                <strong>Error:</strong> {{ pdf.error }}
+              </div>
+              <button class="btn btn-secondary btn-sm w-100" disabled>
+                <i class="fas fa-times"></i> No disponible
+              </button>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <!-- BOTONES DE ACCIÓN -->
+    <div class="d-flex justify-content-between mt-4">
+      <a href="{{ url_for('reiniciar') }}" class="btn btn-outline-secondary">
+        <i class="fas fa-redo"></i> Crear Nuevas Etiquetas
+      </a>
+      
+      <div>
+        {% if pdfs_exitosos | length > 0 %}
+        <span class="badge bg-success me-2">
+          {{ pdfs_exitosos | length }} {% if pdfs_exitosos | length == 1 %}archivo generado{% else %}archivos generados{% endif %}
+        </span>
+        {% endif %}
+        
+        {% set pdfs_con_error = pdfs | selectattr('generado', 'equalto', false) | list %}
+        {% if pdfs_con_error | length > 0 %}
+        <span class="badge bg-danger">
+          {{ pdfs_con_error | length }} {% if pdfs_con_error | length == 1 %}error{% else %}errores{% endif %}
+        </span>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- INFORMACIÓN ADICIONAL -->
+    <div class="mt-4 p-3 bg-light rounded">
+      <h6><i class="fas fa-info-circle"></i> Información importante:</h6>
+      <ul class="mb-0 small">
+        <li>Los archivos se generan optimizados para hojas carta precortadas de 66 etiquetas</li>
+        <li>Cada etiqueta tiene dimensiones de 35x25mm</li>
+        <li>Los archivos se eliminan automáticamente después de un tiempo</li>
+        <li>Si necesitas regenerar las etiquetas, usa el botón "Crear Nuevas Etiquetas"</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
