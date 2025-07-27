@@ -1,3 +1,53 @@
-env/  
-__pycache__/ 
-*.pyc 
+# Entornos virtuales
+venv/
+env/
+ENV/
+
+# Archivos de Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Archivos generados por la aplicación
+pdfs_generados/
+*.pdf
+*.zip
+
+# Logs
+*.log
+security.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
+
+# Configuración local
+.env
+config_local.py
+
+# Archivos temporales
+*.tmp
+*.temp

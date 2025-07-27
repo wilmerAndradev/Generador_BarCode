@@ -61,36 +61,42 @@
     {% endif %}
 
     <!-- LISTA DE ARCHIVOS GENERADOS -->
-    <div class="row">
+    <div class="pdf-list">
       {% for pdf in pdfs %}
-      <div class="col-md-6 mb-3">
-        <div class="pdf-card {% if not pdf.generado %}pdf-card-error{% endif %}">
-          <div class="pdf-card-header">
-            <h5>
+      <div class="pdf-row {% if not pdf.generado %}pdf-row-error{% endif %}">
+        <div class="pdf-row-content">
+          <div class="pdf-info">
+            <div class="pdf-icon">
               {% if pdf.generado %}
                 <i class="fas fa-file-pdf text-success"></i>
               {% else %}
                 <i class="fas fa-exclamation-triangle text-danger"></i>
               {% endif %}
-              {{ pdf.sku }}
-            </h5>
+            </div>
+            <div class="pdf-details">
+              <h6 class="pdf-title">{{ pdf.sku }}</h6>
+              <div class="pdf-meta">
+                <span class="me-3"><strong>Código:</strong> {{ pdf.codigo }}</span>
+                <span class="me-3"><strong>Cantidad:</strong> {{ pdf.cantidad }} etiquetas</span>
+                {% if pdf.generado %}
+                  <span class="text-muted small">{{ pdf.nombre_archivo }}</span>
+                {% endif %}
+              </div>
+              {% if not pdf.generado %}
+                <div class="pdf-error">
+                  <small class="text-danger"><strong>Error:</strong> {{ pdf.error }}</small>
+                </div>
+              {% endif %}
+            </div>
           </div>
-          
-          <div class="pdf-card-body">
-            <p class="mb-2"><strong>Código:</strong> {{ pdf.codigo }}</p>
-            <p class="mb-2"><strong>Cantidad:</strong> {{ pdf.cantidad }} etiquetas</p>
-            
+          <div class="pdf-actions">
             {% if pdf.generado %}
-              <p class="mb-3 text-muted small">{{ pdf.nombre_archivo }}</p>
               <a href="{{ url_for('descargar_pdf', filename=pdf.nombre_archivo) }}" 
-                 class="btn btn-primary btn-sm w-100">
-                <i class="fas fa-download"></i> Descargar PDF
+                 class="btn btn-primary btn-sm">
+                <i class="fas fa-download"></i> Descargar
               </a>
             {% else %}
-              <div class="alert alert-danger small mb-2">
-                <strong>Error:</strong> {{ pdf.error }}
-              </div>
-              <button class="btn btn-secondary btn-sm w-100" disabled>
+              <button class="btn btn-secondary btn-sm" disabled>
                 <i class="fas fa-times"></i> No disponible
               </button>
             {% endif %}
@@ -130,6 +136,7 @@
         <li>Cada etiqueta tiene dimensiones de 35x25mm</li>
         <li>Los archivos se eliminan automáticamente después de un tiempo</li>
         <li>Si necesitas regenerar las etiquetas, usa el botón "Crear Nuevas Etiquetas"</li>
+        <li><strong>Para una correcta impresión:</strong> En la ventana de impresión de su navegador, busque "Opciones adicionales" o "Más configuraciones", luego en la sección "Escala" seleccione "Ajustar al área de impresión" en lugar de "Predeterminado""</li>
       </ul>
     </div>
   </div>

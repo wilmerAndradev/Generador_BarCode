@@ -1,228 +1,129 @@
-/* ================================================================
-   VARIABLES CSS GLOBALES
-   ================================================================ */
 :root {
-  /* Colores principales del sitio */
-  --color-principal: #B18340;    /* Dorado/oro para elementos principales */
-  --color-secundario: #ffffff;   /* Blanco para fondos */
-  --color-terciario: #073763;    /* Azul oscuro para textos */
-  
-  /* Tipografías */
-  --fuente-principal: 'Montserrat', sans-serif;     /* Fuente para texto normal */
-  --fuente-encabezado: 'Playfair Display', serif;   /* Fuente para títulos */
-  
-  /* Medidas reutilizables */
-  --radio-borde: 15px;                              /* Radio de bordes redondeados */
-  --sombra-suave: 0 4px 15px rgba(0, 0, 0, 0.1);   /* Sombra suave para tarjetas */
+  --color-principal: #B18340;
+  --color-secundario: #ffffff;
+  --color-terciario: #073763;
+  --fuente-principal: 'Montserrat', sans-serif;
+  --fuente-encabezado: 'Playfair Display', serif;
+  --radio-borde: 15px;
+  --sombra-suave: 0 4px 15px rgba(0, 0, 0, 0.1);
 }
 
-/* ================================================================
-   ESTILOS GENERALES DEL BODY Y TÍTULOS
-   ================================================================ */
 body {
-  /* Fondo gris muy claro para toda la página */
   background-color: #f8f9fa !important;
-  /* Fuente principal para todo el texto */
   font-family: var(--fuente-principal);
-  /* Color de texto oscuro, forzado con !important */
   color: #212529 !important;
 }
 
-/* Estilos para todos los títulos */
 h1, h2, h3 {
-  /* Fuente elegante para títulos */
   font-family: var(--fuente-encabezado);
-  /* Color dorado para títulos, forzado */
-  color: var(--color-principal) !important;
+  color: var(--color-principal);
 }
 
-/* ================================================================
-   NAVBAR (BARRA DE NAVEGACIÓN SUPERIOR)
-   ================================================================ */
+/* NAVBAR */
 .navbar {
-  /* Fondo dorado para la barra superior */
   background-color: var(--color-principal);
-  /* Espaciado interno vertical */
   padding: 10px 0;
 }
 
-/* Logo dentro del navbar */
 .navbar .navbar-brand img {
-  /* Altura fija del logo */
   height: 80px;
-  /* Ancho automático para mantener proporción */
   width: auto;
 }
 
-/* ================================================================
-   CONTENEDORES DE FORMULARIOS
-   ================================================================ */
-/* Contenedor principal de formularios (tamaño normal) */
+/* CONTENEDORES DE FORMULARIO */
 .form-container {
-  /* Ancho máximo del contenedor */
   max-width: 600px;
-  /* Centrado horizontal y margen vertical */
   margin: 50px auto;
-  /* Espaciado interno generoso */
   padding: 50px 40px;
-  /* Fondo blanco forzado */
   background-color: var(--color-secundario) !important;
-  /* Bordes redondeados */
   border-radius: var(--radio-borde);
-  /* Sombra suave */
   box-shadow: var(--sombra-suave);
+  color: #212529 !important;
 }
 
-/* Contenedor más ancho para formularios con muchos campos */
 .form-container-wide {
   max-width: 900px;
 }
 
-/* ================================================================
-   INDICADOR DE PASOS (1, 2, 3)
-   ================================================================ */
+/* INDICADOR DE PASOS */
 .step-indicator {
-  /* Centrar los pasos */
   text-align: center;
-  /* Espacio inferior */
   margin-bottom: 30px;
 }
 
-/* Cada círculo de paso individual */
 .step-indicator .step {
-  /* Mostrar como bloque en línea para alineación horizontal */
   display: inline-block;
-  /* Tamaño del círculo */
   width: 40px;
   height: 40px;
-  /* Hacer círculo perfecto */
   border-radius: 50%;
-  /* Color de fondo gris por defecto */
   background-color: #e9ecef;
-  /* Color de texto gris */
   color: #6c757d;
-  /* Centrar texto verticalmente */
   line-height: 40px;
-  /* Espacio entre círculos */
   margin: 0 10px;
-  /* Texto en negrita */
   font-weight: bold;
-  /* Posición relativa para el checkmark */
   position: relative;
 }
 
-/* Paso activo (actual) */
 .step-indicator .step.active {
-  /* Fondo dorado */
   background-color: var(--color-principal);
-  /* Texto blanco forzado */
-  color: white !important;
+  color: white;
 }
 
-/* Paso completado */
 .step-indicator .step.completed {
-  /* Fondo verde */
   background-color: #28a745;
-  /* Texto blanco forzado */
-  color: white !important;
-  /* Ocultar el número original cuando está completado */
-  color: transparent !important;
+  color: transparent; /* Ocultar el número */
 }
 
-/* Checkmark para pasos completados */
 .step-indicator .step.completed::after {
-  /* Símbolo de check */
   content: '✓';
-  /* Posicionamiento absoluto */
   position: absolute;
-  /* Centrar perfectamente */
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  /* Tamaño del checkmark */
   font-size: 18px;
-  /* Color blanco para el checkmark */
   color: white;
-  /* Asegurar que el checkmark sea visible */
-  opacity: 1;
 }
 
-/* ================================================================
-   FORMULARIOS Y CAMPOS DE ENTRADA
-   ================================================================ */
-/* Etiquetas de los campos */
+/* FORMULARIOS */
 .form-label {
-  /* Color azul oscuro forzado */
-  color: var(--color-terciario) !important;
-  /* Peso de fuente medio */
+  color: var(--color-terciario);
   font-weight: 500;
 }
 
-/* Campos de entrada (inputs) */
 .form-control {
-  /* Bordes redondeados */
   border-radius: 10px;
-  /* Espaciado interno generoso */
   padding: 12px;
-  /* Borde gris claro */
   border: 1px solid #dee2e6;
-  /* Animación suave al cambiar borde */
   transition: border-color 0.3s ease;
-  /* Fondo blanco forzado */
-  background-color: #ffffff !important;
-  /* Texto oscuro forzado */
-  color: #212529 !important;
 }
 
-/* Campos cuando están seleccionados (focus) */
 .form-control:focus {
-  /* Borde dorado al seleccionar */
   border-color: var(--color-principal);
-  /* Sombra dorada suave */
   box-shadow: 0 0 0 0.2rem rgba(177, 131, 64, 0.25);
-  /* Mantener fondo blanco */
-  background-color: #ffffff !important;
-  /* Mantener texto oscuro */
-  color: #212529 !important;
+  outline: none;
 }
 
-/* Texto de ayuda debajo de campos */
 .form-text {
-  /* Color gris forzado */
-  color: #6c757d !important;
-  /* Tamaño de fuente pequeño */
+  color: #6c757d;
   font-size: 0.875em;
 }
 
-/* ================================================================
-   BOTONES
-   ================================================================ */
-/* Botón principal (azul) */
+/* BOTONES */
 .btn-primary {
-  /* Fondo dorado */
   background-color: var(--color-principal);
-  /* Borde dorado */
   border-color: var(--color-principal);
-  /* Bordes redondeados */
   border-radius: 10px;
-  /* Espaciado interno */
   padding: 12px 24px;
-  /* Texto en negrita */
   font-weight: 500;
-  /* Animación suave para hover */
   transition: all 0.3s ease;
 }
 
-/* Botón principal al pasar el mouse */
 .btn-primary:hover {
-  /* Dorado más oscuro */
   background-color: #946e36;
   border-color: #946e36;
-  /* Efecto de elevación */
   transform: translateY(-1px);
 }
 
-/* Botón secundario */
 .btn-secondary {
   border-radius: 10px;
   padding: 12px 24px;
@@ -230,11 +131,9 @@ h1, h2, h3 {
 }
 
 .btn-secondary:hover {
-  /* Efecto de elevación */
   transform: translateY(-1px);
 }
 
-/* Botón de éxito (verde) */
 .btn-success {
   border-radius: 10px;
   padding: 15px 30px;
@@ -246,288 +145,190 @@ h1, h2, h3 {
   transform: translateY(-1px);
 }
 
-/* Botón outline secundario */
 .btn-outline-secondary {
   border-radius: 10px;
   padding: 10px 20px;
 }
 
-/* ================================================================
-   TARJETAS DE PRODUCTOS
-   ================================================================ */
+/* TARJETAS DE PRODUCTOS */
 .product-card {
-  /* Borde gris claro */
   border: 2px solid #e9ecef;
-  /* Bordes muy redondeados */
   border-radius: 12px;
-  /* Espaciado interno generoso */
   padding: 20px;
-  /* Espacio inferior entre tarjetas */
   margin-bottom: 20px;
-  /* Fondo blanco casi puro, forzado */
   background-color: #fdfdfd !important;
-  /* Animación suave para el borde */
   transition: border-color 0.3s ease;
+  color: #212529 !important;
 }
 
-/* Tarjeta de producto al pasar el mouse */
 .product-card:hover {
-  /* Borde dorado al hacer hover */
   border-color: var(--color-principal);
 }
 
-/* Título dentro de tarjeta de producto */
 .product-card h5 {
-  /* Color dorado forzado */
-  color: var(--color-principal) !important;
-  /* Espacio inferior */
+  color: var(--color-principal);
   margin-bottom: 15px;
-  /* Texto semi-negrita */
   font-weight: 600;
 }
 
-/* Icono dentro del título */
 .product-card h5 i {
-  /* Espacio a la derecha del icono */
   margin-right: 8px;
 }
 
-/* ================================================================
-   TARJETAS DE PDF (PÁGINA DE DESCARGA)
-   ================================================================ */
-.pdf-card {
-  /* Borde gris claro */
-  border: 2px solid #e9ecef;
-  /* Bordes redondeados */
-  border-radius: 12px;
-  /* Fondo blanco forzado */
+/* LISTA DE PDFs - VISTA DE FILAS */
+.pdf-list {
+  margin: 20px 0;
+}
+
+.pdf-row {
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
   background-color: var(--color-secundario) !important;
-  /* Animación para hover */
+  margin-bottom: 12px;
   transition: all 0.3s ease;
-  /* Altura completa disponible */
-  height: 100%;
-  /* Flexbox para organizar contenido */
-  display: flex;
-  flex-direction: column;
+  color: #212529 !important;
 }
 
-/* Tarjeta PDF al pasar el mouse */
-.pdf-card:hover {
-  /* Borde dorado */
+.pdf-row:hover {
   border-color: var(--color-principal);
-  /* Efecto de elevación */
-  transform: translateY(-2px);
-  /* Sombra más prominente */
-  box-shadow: var(--sombra-suave);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
-/* Tarjeta con error */
-.pdf-card-error {
-  /* Borde rojo para errores */
+.pdf-row-error {
   border-color: #dc3545;
-  /* Fondo rojizo muy claro, forzado */
   background-color: #fff5f5 !important;
 }
 
-/* Encabezado de tarjeta PDF */
-.pdf-card-header {
-  /* Espaciado interno */
-  padding: 15px 20px 10px;
-  /* Línea separadora inferior */
-  border-bottom: 1px solid #f1f3f4;
-}
-
-/* Título en encabezado de tarjeta PDF */
-.pdf-card-header h5 {
-  /* Color dorado forzado */
-  color: var(--color-principal) !important;
-  /* Sin margen */
-  margin: 0;
-  /* Texto semi-negrita */
-  font-weight: 600;
-}
-
-.pdf-card-header h5 i {
-  margin-right: 8px;
-}
-
-/* Cuerpo de tarjeta PDF */
-.pdf-card-body {
-  /* Espaciado interno */
-  padding: 15px 20px 20px;
-  /* Crecer para ocupar espacio disponible */
-  flex-grow: 1;
-  /* Flexbox para organizar contenido */
+.pdf-row-content {
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding: 15px 20px;
 }
 
-/* Párrafos dentro del cuerpo */
-.pdf-card-body p {
-  /* Espacio inferior pequeño */
-  margin-bottom: 8px;
-  /* Texto ligeramente más pequeño */
+.pdf-info {
+  display: flex;
+  align-items: center;
+  flex-grow: 1;
+}
+
+.pdf-icon {
+  margin-right: 15px;
+  font-size: 1.5em;
+}
+
+.pdf-details {
+  flex-grow: 1;
+}
+
+.pdf-title {
+  color: var(--color-principal);
+  font-weight: 600;
+  margin: 0 0 5px 0;
+  font-size: 1.1em;
+}
+
+.pdf-meta {
+  color: #6c757d;
   font-size: 0.9em;
-  /* Color oscuro forzado */
-  color: #212529 !important;
+  margin-bottom: 3px;
 }
 
-/* Botón al final de la tarjeta */
-.pdf-card-body .btn {
-  /* Empujar al final con margin automático */
-  margin-top: auto;
+.pdf-error {
+  margin-top: 5px;
 }
 
-/* ================================================================
-   ALERTAS Y MENSAJES
-   ================================================================ */
+.pdf-actions {
+  margin-left: 15px;
+}
+
+/* ALERTAS */
 .alert {
-  /* Espacio inferior */
   margin-bottom: 25px;
-  /* Bordes redondeados */
   border-radius: 10px;
 }
 
-/* Alerta de error específica */
-.alert-danger {
-  /* Fondo rojizo claro forzado */
-  background-color: #f8d7da !important;
-  /* Borde rojizo forzado */
-  border-color: #f5c6cb !important;
-  /* Texto rojo oscuro forzado */
-  color: #721c24 !important;
-}
-
-/* ================================================================
-   BADGES Y ETIQUETAS
-   ================================================================ */
+/* BADGES */
 .badge {
-  /* Tamaño de fuente */
   font-size: 0.85em;
-  /* Espaciado interno */
   padding: 8px 12px;
-  /* Bordes muy redondeados */
   border-radius: 20px;
 }
 
-/* ================================================================
-   SECCIONES DE INFORMACIÓN
-   ================================================================ */
+/* INFORMACIÓN ADICIONAL */
 .bg-light {
-  /* Fondo gris muy claro forzado */
   background-color: #f8f9fa !important;
-  /* Borde gris claro */
   border: 1px solid #e9ecef;
-  /* Texto oscuro forzado */
-  color: #212529 !important;
 }
 
-/* Texto con color apagado */
-.text-muted {
-  /* Color gris forzado */
-  color: #6c757d !important;
-}
-
-/* ================================================================
-   RESPONSIVE (DISPOSITIVOS MÓVILES)
-   ================================================================ */
-@media (max-width: 768px) {
-  /* Contenedor de formulario en móviles */
-  .form-container {
-    /* Márgenes más pequeños */
-    margin: 20px auto;
-    /* Espaciado interno reducido */
-    padding: 30px 20px;
-  }
-  
-  /* Pasos más pequeños en móviles */
-  .step-indicator .step {
-    width: 35px;
-    height: 35px;
-    line-height: 35px;
-    margin: 0 5px;
-  }
-  
-  /* Tarjetas con menos espaciado */
-  .product-card {
-    padding: 15px;
-  }
-  
-  /* Tarjetas PDF más compactas */
-  .pdf-card-header, .pdf-card-body {
-    padding: 12px 15px;
-  }
-  
-  /* Botones grandes más pequeños en móvil */
-  .btn-lg {
-    padding: 12px 20px;
-    font-size: 1rem;
-  }
-}
-
-/* ================================================================
-   ANIMACIONES
-   ================================================================ */
-/* Animación de aparición suave */
-@keyframes fadeIn {
-  from {
-    /* Invisible y ligeramente abajo */
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    /* Visible y en posición normal */
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* Aplicar animación a elementos principales */
-.form-container, .product-card, .pdf-card {
-  animation: fadeIn 0.5s ease-out;
-}
-
-/* ================================================================
-   ESTADOS ESPECIALES
-   ================================================================ */
-/* Botones deshabilitados */
+/* BOTONES DISABLED */
 .btn:disabled {
-  /* Más transparente */
   opacity: 0.6;
-  /* Cursor que indica no disponible */
   cursor: not-allowed;
 }
 
-/* ================================================================
-   EFECTOS HOVER
-   ================================================================ */
-/* Campos dentro de tarjetas al hacer hover en la tarjeta */
+/* HOVER EFFECTS */
 .product-card:hover .form-control {
-  /* Borde dorado suave */
   border-color: rgba(177, 131, 64, 0.3);
 }
 
-/* ================================================================
-   ESTADOS DE FOCUS
-   ================================================================ */
-.form-control:focus {
-  /* Quitar outline por defecto del navegador */
-  outline: none;
-  /* Borde dorado */
-  border-color: var(--color-principal);
-  /* Sombra de enfoque suave */
-  box-shadow: 0 0 0 3px rgba(177, 131, 64, 0.1);
+/* ANIMACIONES */
+@keyframes fadeIn {
+  from {
+      opacity: 0;
+      transform: translateY(20px);
+  }
+  to {
+      opacity: 1;
+      transform: translateY(0);
+  }
 }
 
-/* ================================================================
-   FORZAR MODO CLARO SIEMPRE
-   ================================================================ */
-/* Forzar esquema de color claro en todos los elementos */
-* {
-  color-scheme: light !important;
+.form-container, .product-card, .pdf-row {
+  animation: fadeIn 0.5s ease-out;
 }
 
-/* Forzar esquema de color claro en el HTML */
-html {
-  color-scheme: light !important;
+/* RESPONSIVE */
+@media (max-width: 768px) {
+  .form-container {
+      margin: 20px auto;
+      padding: 30px 20px;
+  }
+  
+  .step-indicator .step {
+      width: 35px;
+      height: 35px;
+      line-height: 35px;
+      margin: 0 5px;
+  }
+  
+  .product-card {
+      padding: 15px;
+  }
+  
+  .pdf-row-content {
+      flex-direction: column;
+      align-items: flex-start;
+      padding: 15px;
+  }
+  
+  .pdf-info {
+      margin-bottom: 15px;
+      width: 100%;
+  }
+  
+  .pdf-actions {
+      width: 100%;
+      margin-left: 0;
+      text-align: center;
+  }
+  
+  .pdf-actions .btn {
+      width: 100%;
+  }
+  
+  .btn-lg {
+      padding: 12px 20px;
+      font-size: 1rem;
+  }
 }
